@@ -19,37 +19,32 @@ public class AddTaskServlet extends HttpServlet {
         int userId = (Integer) session.getAttribute("userId");
 
         String title = req.getParameter("title");
+        String description = req.getParameter("description");
         String deadline = req.getParameter("deadline");
-        String statusId = req.getParameter("status_id");
-        String priorityId = req.getParameter("priority_id");
 
         // 🔒 Validation
-        if (title == null || title.trim().isEmpty()
-            || statusId == null || priorityId == null) {
-
+        if (title == null || title.trim().isEmpty()) {
             res.sendRedirect("dashboard.jsp?error=empty");
             return;
         }
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(
-                "INSERT INTO tasks(title, deadline, status_id, priority_id, user_id) VALUES (?, ?, ?, ?, ?)")) {
+                "INSERT INTO tasks(title, description, deadline, status, user_id) VALUES (?, ?, ?, 'PENDING', ?)")) {
 
             ps.setString(1, title);
+            ps.setString(2, description);
 
             // Safe date handling
             if (deadline != null && !deadline.isEmpty()) {
-                ps.setDate(2, Date.valueOf(deadline));
+                ps.setDate(3, Date.valueOf(deadline));
             } else {
-                ps.setNull(2, java.sql.Types.DATE);
+                ps.setNull(3, java.sql.Types.DATE);
             }
 
-            ps.setInt(3, Integer.parseInt(statusId));
-            ps.setInt(4, Integer.parseInt(priorityId));
-            ps.setInt(5, userId);
+            ps.setInt(4, userId);
 
             int rows = ps.executeUpdate();
-
             System.out.println("✔ Task added: " + rows);
 
         } catch (Exception e) {

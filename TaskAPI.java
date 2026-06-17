@@ -2,34 +2,37 @@ import javax.servlet.*;
 import javax.servlet.http.*;
 import java.io.*;
 import java.sql.*;
+import util.DBConnection;
+
 public class TaskAPI extends HttpServlet {
 
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
-    throws IOException {
+            throws IOException {
 
         res.setContentType("application/json");
-
         PrintWriter out = res.getWriter();
 
-        try{
-            Connection con = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/task_manager",
-                "root","root"
-            );
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement("SELECT * FROM tasks");
+             ResultSet rs = ps.executeQuery()) {
 
-            ResultSet rs = con.createStatement()
-                .executeQuery("SELECT * FROM tasks");
+            StringBuilder json = new StringBuilder();
+            json.append("[");
+            boolean first = true;
 
-            out.print("[");
-
-            while(rs.next()){
-                out.print("{\"title\":\""+rs.getString("title")+"\"},");
+            while (rs.next()) {
+                if (!first) {
+                    json.append(",");
+                }
+                json.append("{\"title\":\"").append(rs.getString("title")).append("\"}");
+                first = false;
             }
+            json.append("]");
 
-            out.print("]");
+            out.print(json.toString());
 
-        }catch(Exception e){
-            out.print("error");
+        } catch (Exception e) {
+            out.print("{\"error\":\"" + e.getMessage() + "\"}");
         }
     }
 }

@@ -14,7 +14,7 @@ public class DeleteCategoryServlet extends HttpServlet {
 
         try(Connection con = DBConnection.getConnection()){
 
-            String sql = type.equals("status") ?
+            String sql = "status".equals(type) ?
                 "DELETE FROM task_status WHERE id=?" :
                 "DELETE FROM task_priority WHERE id=?";
 

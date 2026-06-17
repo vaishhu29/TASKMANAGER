@@ -1,8 +1,12 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*" %>
+<%@ page contentType="text/html;charset=UTF-8" %>
 
 <%
+request.setAttribute("activePage", "help");
 String name = (String)session.getAttribute("name");
-if(name == null){
+Integer userId = (Integer)session.getAttribute("userId");
+
+if(userId == null){
     response.sendRedirect("login.jsp");
     return;
 }
@@ -11,201 +15,213 @@ if(name == null){
 <!DOCTYPE html>
 <html>
 <head>
-<title>Help & Support</title>
+    <title>TaskFlow - Help & Support</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #f8fafc;
+            margin: 0;
+            color: #1e293b;
+        }
+        
+        .content {
+            margin-left: 260px;
+            padding: 40px;
+            min-height: 100vh;
+        }
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+        .header-section {
+            margin-bottom: 30px;
+        }
 
-<style>
-body{
-    margin:0;
-    font-family:'Segoe UI';
-    background:#f4f6fb;
-}
+        .header-section h3 {
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0;
+        }
 
-/* SIDEBAR */
-.sidebar{
-    width:260px;
-    height:100vh;
-    position:fixed;
-    background:linear-gradient(180deg,#0f172a,#1e293b);
-    color:white;
-    padding:20px;
-}
+        .header-section p {
+            color: #64748b;
+            margin: 5px 0 0 0;
+            font-size: 14px;
+        }
 
-/* PROFILE */
-.profile{
-    text-align:center;
-    margin-bottom:25px;
-}
+        .card-box {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(0, 0, 0, 0.02);
+            margin-bottom: 30px;
+        }
 
-.profile-img{
-    width:70px;
-    height:70px;
-    border-radius:50%;
-    background:#e2e8f0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    margin:auto;
-    overflow:hidden;
-}
+        .card-box h5 {
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 25px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-#profileIcon{
-    font-size:28px;
-}
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
 
-.profile-img img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-}
+        .contact-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: rgba(99, 102, 241, 0.1);
+            color: #6366f1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
 
-/* MENU */
-.menu a{
-    display:block;
-    padding:12px;
-    color:#cbd5f5;
-    text-decoration:none;
-    border-radius:10px;
-    margin:6px 0;
-}
+        .contact-info p {
+            margin: 0;
+            font-size: 14px;
+        }
 
-.menu a:hover{
-    background:#334155;
-}
+        .faq-item {
+            border-bottom: 1px solid #f1f5f9;
+            padding: 20px 0;
+        }
 
-.menu .active{
-    background:#6366f1;
-}
+        .faq-item:last-child {
+            border-bottom: none;
+        }
 
-/* CONTENT */
-.content{
-    margin-left:260px;
-    padding:30px;
-}
+        .faq-question {
+            font-weight: 600;
+            font-size: 15px;
+            color: #0f172a;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-/* CARD */
-.card-box{
-    background:white;
-    padding:25px;
-    border-radius:16px;
-    box-shadow:0 8px 20px rgba(0,0,0,0.05);
-    margin-bottom:20px;
-}
-
-/* FAQ */
-.faq-item{
-    margin-bottom:10px;
-    padding:10px;
-    border-radius:8px;
-    transition:0.2s;
-}
-
-.faq-item:hover{
-    background:#f1f5f9;
-}
-</style>
+        .faq-answer {
+            font-size: 14px;
+            color: #64748b;
+            line-height: 1.6;
+            padding-left: 24px;
+        }
+    </style>
 </head>
-
 <body>
 
-<!-- SIDEBAR -->
-<div class="sidebar">
+    <!-- SIDEBAR -->
+    <jsp:include page="sidebar.jsp" />
 
-<div class="profile">
-<div class="profile-img">
-    <span id="profileIcon"></span>
-    <img id="profilePreview" style="display:none;">
-</div>
-<h6 class="mt-2"><%= name %></h6>
-</div>
+    <!-- MAIN CONTENT -->
+    <div class="content">
+        
+        <!-- HEADER -->
+        <div class="header-section">
+            <h3>Help & Support</h3>
+            <p>Find answers to common questions or reach out to our team.</p>
+        </div>
 
-<div class="menu">
-<a href="dashboard.jsp">Dashboard</a>
-<a href="mytasks.jsp">My Task</a>
-<a href="categories.jsp">Task Categories</a>
-<a href="settings.jsp">Settings</a>
-<a href="help.jsp" class="active">Help</a>
-<a href="logout">Logout</a>
-</div>
+        <div class="row g-4">
+            
+            <!-- CONTACT INFO -->
+            <div class="col-md-5">
+                <div class="card-box">
+                    <h5><i class="bi bi-headset text-primary"></i> Contact Support</h5>
+                    
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="bi bi-envelope-fill"></i>
+                        </div>
+                        <div class="contact-info">
+                            <p class="text-muted small fw-bold">EMAIL SUPPORT</p>
+                            <p class="fw-semibold">support@taskflow.com</p>
+                        </div>
+                    </div>
 
-</div>
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="bi bi-telephone-fill"></i>
+                        </div>
+                        <div class="contact-info">
+                            <p class="text-muted small fw-bold">PHONE NUMBER</p>
+                            <p class="fw-semibold">+91 98765 43210</p>
+                        </div>
+                    </div>
 
-<!-- CONTENT -->
-<div class="content">
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="bi bi-clock-fill"></i>
+                        </div>
+                        <div class="contact-info">
+                            <p class="text-muted small fw-bold">BUSINESS HOURS</p>
+                            <p class="fw-semibold">Monday – Friday, 9 AM – 6 PM</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-<h3 class="mb-4">Help & Support</h3>
+            <!-- FAQ SECTION -->
+            <div class="col-md-7">
+                <div class="card-box">
+                    <h5><i class="bi bi-question-circle-fill text-info"></i> Frequently Asked Questions</h5>
+                    
+                    <div class="faq-item pt-0">
+                        <div class="faq-question">
+                            <i class="bi bi-patch-question text-primary"></i>
+                            <span>How do I add a new task?</span>
+                        </div>
+                        <div class="faq-answer">
+                            Click the blue "+ Add Task" button on the top right of your Dashboard. Fill in the title, description, and optional due date, then click "Add Task".
+                        </div>
+                    </div>
 
-<!-- CONTACT -->
-<div class="card-box">
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <i class="bi bi-patch-question text-primary"></i>
+                            <span>How do I complete a task?</span>
+                        </div>
+                        <div class="faq-answer">
+                            You can mark a task complete by clicking the green check mark (✔) button on the task card on the Dashboard, or via the "My Tasks" page.
+                        </div>
+                    </div>
 
-<h5 class="mb-3">Contact Information</h5>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <i class="bi bi-patch-question text-primary"></i>
+                            <span>Can I customize task statuses?</span>
+                        </div>
+                        <div class="faq-answer">
+                            Yes, navigate to the "Categories" tab from the sidebar. You can add, edit, or delete custom task statuses and priority levels there.
+                        </div>
+                    </div>
 
-<p><i class="bi bi-envelope"></i> <b>Email:</b> support@taskmanager.com</p>
-<p><i class="bi bi-telephone"></i> <b>Phone:</b> +91 9876543210</p>
-<p><i class="bi bi-clock"></i> <b>Working Hours:</b> 9 AM – 6 PM</p>
+                    <div class="faq-item pb-0">
+                        <div class="faq-question">
+                            <i class="bi bi-patch-question text-primary"></i>
+                            <span>How do I change my profile avatar?</span>
+                        </div>
+                        <div class="faq-answer">
+                            Go to "Settings" page and click on your profile avatar image. A dialog box will appear where you can upload a local image file or select an emoji as your avatar.
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-</div>
+        </div>
 
-<!-- FAQ -->
-<div class="card-box">
-
-<h5 class="mb-3">Frequently Asked Questions</h5>
-
-<div class="faq-item">
-<i class="bi bi-question-circle"></i>
-<b> How to add a task?</b><br>
-<small>Click the "Add Task" button on the dashboard.</small>
-</div>
-
-<div class="faq-item">
-<i class="bi bi-check-circle"></i>
-<b> How to complete a task?</b><br>
-<small>Click the ✔ button next to the task.</small>
-</div>
-
-<div class="faq-item">
-<i class="bi bi-trash"></i>
-<b> How to delete a task?</b><br>
-<small>Click the ✖ button next to the task.</small>
-</div>
-
-<div class="faq-item">
-<i class="bi bi-folder"></i>
-<b> How to add categories?</b><br>
-<small>Go to "Task Categories" page and create one.</small>
-</div>
-
-</div>
-
-</div>
-
-<!-- AVATAR SCRIPT -->
-<script>
-window.addEventListener("load", function(){
-
-    let saved = localStorage.getItem("profileImage");
-
-    let img = document.getElementById("profilePreview");
-    let icon = document.getElementById("profileIcon");
-
-    if(saved){
-        if(saved.startsWith("data:image")){
-            img.src = saved;
-            img.style.display = "block";
-            icon.style.display = "none";
-        } else {
-            icon.innerText = saved;
-            icon.style.display = "block";
-            img.style.display = "none";
-        }
-    } else {
-        icon.innerText = "👤";
-    }
-
-});
-</script>
+    </div>
 
 </body>
 </html>

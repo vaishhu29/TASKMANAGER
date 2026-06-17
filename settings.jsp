@@ -1,312 +1,461 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*" %>
+<%@ page import="util.DBConnection" %>
+<%@ page contentType="text/html;charset=UTF-8" %>
 
 <%
+request.setAttribute("activePage", "settings");
 String name = (String)session.getAttribute("name");
 String email = (String)session.getAttribute("email");
+Integer userId = (Integer)session.getAttribute("userId");
 
-if(name == null){
+if(userId == null){
     response.sendRedirect("login.jsp");
     return;
 }
+
+String firstname = "";
+String lastname = "";
+String emailDb = "";
+
+try(Connection con = DBConnection.getConnection()){
+    PreparedStatement ps = con.prepareStatement("SELECT firstname, lastname, email FROM users WHERE id=?");
+    ps.setInt(1, userId);
+    ResultSet rs = ps.executeQuery();
+    if(rs.next()){
+        firstname = rs.getString("firstname");
+        lastname = rs.getString("lastname");
+        emailDb = rs.getString("email");
+    }
+    rs.close(); ps.close();
+} catch(Exception e){
+    e.printStackTrace();
+}
+
+String success = request.getParameter("success");
+String error = request.getParameter("error");
 %>
 
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>Settings</title>
+    <title>TaskFlow - Settings</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #f8fafc;
+            margin: 0;
+            color: #1e293b;
+        }
+        
+        .content {
+            margin-left: 260px;
+            padding: 40px;
+            min-height: 100vh;
+        }
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        .header-section {
+            margin-bottom: 30px;
+        }
 
-<style>
-body{
-    margin:0;
-    font-family:'Segoe UI';
-    background:#f4f6fb;
-}
+        .header-section h3 {
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0;
+        }
 
-/* SIDEBAR */
-.sidebar{
-    width:260px;
-    height:100vh;
-    position:fixed;
-    background:#0f172a;
-    color:white;
-    padding:20px;
-}
+        .header-section p {
+            color: #64748b;
+            margin: 5px 0 0 0;
+            font-size: 14px;
+        }
 
-.menu a{
-    display:block;
-    padding:12px;
-    color:#cbd5f5;
-    text-decoration:none;
-    border-radius:10px;
-    margin:6px 0;
-}
+        .card-box {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(0, 0, 0, 0.02);
+            margin-bottom: 30px;
+            max-width: 700px;
+        }
 
-.menu a:hover{
-    background:#334155;
-}
+        .card-box h5 {
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 25px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-.menu .active{
-    background:#6366f1;
-}
+        .profile-setup {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 30px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid #f1f5f9;
+        }
 
-/* CONTENT */
-.content{
-    margin-left:260px;
-    padding:30px;
-}
+        .avatar-holder {
+            position: relative;
+        }
 
-/* CARD */
-.card-box{
-    background:white;
-    padding:30px;
-    border-radius:15px;
-    box-shadow:0 10px 25px rgba(0,0,0,0.08);
-}
+        .avatar-preview {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: white;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.2);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
 
-/* PROFILE */
-.profile-header{
-    display:flex;
-    align-items:center;
-    gap:15px;
-}
+        .avatar-preview:hover {
+            transform: scale(1.05);
+        }
 
-.profile-icon{
-    width:70px;
-    height:70px;
-    border-radius:50%;
-    background:#e2e8f0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:28px;
-    cursor:pointer;
-    overflow:hidden;
-}
+        .avatar-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
 
-.profile-icon img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    border-radius:50%;
-}
+        .avatar-edit-badge {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: #6366f1;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            border: 2px solid white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
 
-/* MODAL */
-.modal-overlay{
-    display:none;
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    background:rgba(0,0,0,0.5);
-    justify-content:center;
-    align-items:center;
-}
+        .form-control {
+            border-radius: 12px;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            font-size: 14px;
+        }
 
-.modal-box{
-    background:white;
-    padding:25px;
-    border-radius:15px;
-    width:400px;
-}
+        .form-control:focus {
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+            border-color: #6366f1;
+        }
 
-/* AVATAR GRID */
-.avatar-grid{
-    display:grid;
-    grid-template-columns:repeat(5,1fr);
-    gap:10px;
-}
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.2);
+        }
 
-.avatar-grid button{
-    padding:10px;
-    border-radius:10px;
-    border:none;
-    font-size:20px;
-    background:#f1f5f9;
-}
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #4f46e5, #4338ca);
+        }
 
-.avatar-grid button:hover{
-    background:#6366f1;
-    color:white;
-}
-</style>
+        .alert {
+            border-radius: 12px;
+            border: none;
+            padding: 15px;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
 
+        /* MODALS */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1050;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-box {
+            background: white;
+            width: 100%;
+            max-width: 440px;
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: none;
+            padding: 0 0 15px 0;
+        }
+
+        .modal-header h5 {
+            font-weight: 700;
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #94a3b8;
+            cursor: pointer;
+        }
+
+        .avatar-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .avatar-btn {
+            border: 1px solid #f1f5f9;
+            background: #f8fafc;
+            font-size: 28px;
+            height: 64px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .avatar-btn:hover {
+            background: #eff6ff;
+            border-color: #bfdbfe;
+            transform: scale(1.05);
+        }
+
+        .upload-area {
+            border: 2px dashed #cbd5e1;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .upload-area:hover {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.02);
+        }
+    </style>
 </head>
-
 <body>
 
-<!-- SIDEBAR -->
-<div class="sidebar">
-<h5><%= name %></h5>
+    <!-- SIDEBAR -->
+    <jsp:include page="sidebar.jsp" />
 
-<div class="menu">
-<a href="dashboard.jsp">Dashboard</a>
-<a href="mytasks.jsp">My Task</a>
-<a href="categories.jsp">Task Categories</a>
-<a href="settings.jsp" class="active">Settings</a>
-<a href="help.jsp">Help</a>
-<a href="logout">Logout</a>
-</div>
-</div>
+    <!-- MAIN CONTENT -->
+    <div class="content">
+        
+        <!-- HEADER -->
+        <div class="header-section">
+            <h3>Account Settings</h3>
+            <p>Update your personal information and customize your profile appearance.</p>
+        </div>
 
-<!-- CONTENT -->
-<div class="content">
+        <!-- ALERTS -->
+        <% if("updated".equals(success)){ %>
+            <div class="alert alert-success d-flex align-items-center gap-2">
+                <i class="bi bi-check-circle-fill"></i> Profile details updated successfully!
+            </div>
+        <% } %>
 
-<div class="card-box">
+        <% if("empty".equals(error)){ %>
+            <div class="alert alert-warning d-flex align-items-center gap-2">
+                <i class="bi bi-exclamation-triangle-fill"></i> Please fill in all required fields.
+            </div>
+        <% } %>
 
-<div class="d-flex justify-content-between">
-<h4>Account Information</h4>
-<a href="dashboard.jsp">Go Back</a>
-</div>
+        <% if("db".equals(error)){ %>
+            <div class="alert alert-danger d-flex align-items-center gap-2">
+                <i class="bi bi-x-circle-fill"></i> Database error occurred. Try again later.
+            </div>
+        <% } %>
 
-<hr>
+        <!-- SETTINGS CONTAINER -->
+        <div class="card-box">
+            <h5><i class="bi bi-person-fill text-primary"></i> Profile Information</h5>
 
-<!-- PROFILE -->
-<div class="profile-header">
+            <!-- AVATAR SETTINGS -->
+            <div class="profile-setup">
+                <div class="avatar-holder" onclick="openModal()">
+                    <div class="avatar-preview">
+                        <span id="pageProfileIcon">👤</span>
+                        <img id="pageProfilePreview" style="display:none;">
+                    </div>
+                    <div class="avatar-edit-badge">
+                        <i class="bi bi-camera-fill"></i>
+                    </div>
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-1"><%= firstname %> <%= lastname %></h6>
+                    <p class="text-muted small mb-0">Click the avatar to upload an image or choose an emoji.</p>
+                </div>
+            </div>
 
-<div id="profileDisplay" class="profile-icon" onclick="openModal()">
-    <span id="profileIcon">👤</span>
-    <img id="profilePreview" style="display:none;">
-</div>
+            <!-- FORM -->
+            <form action="updateProfile" method="post">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small fw-bold">FIRST NAME</label>
+                        <input type="text" name="firstname" class="form-control" value="<%= firstname %>" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small fw-bold">LAST NAME</label>
+                        <input type="text" name="lastname" class="form-control" value="<%= lastname %>" required>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label text-muted small fw-bold">EMAIL ADDRESS</label>
+                        <input type="email" name="email" class="form-control" value="<%= emailDb %>" required>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </form>
+        </div>
 
-<div>
-<h5><%= name %></h5>
-<small><%= email %></small>
-</div>
+    </div>
 
-</div>
+    <!-- AVATAR SELECTION MODAL -->
+    <div id="avatarModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h5>Customize Avatar</h5>
+                <button class="modal-close" onclick="closeModal()">✖</button>
+            </div>
+            
+            <!-- Custom Image Upload -->
+            <div class="upload-area mb-4" onclick="document.getElementById('fileUpload').click()">
+                <i class="bi bi-cloud-arrow-up-fill text-primary" style="font-size:32px;"></i>
+                <h6 class="mt-2 mb-1 fw-bold">Upload Custom Image</h6>
+                <p class="text-muted small mb-0">PNG or JPG up to 1MB</p>
+                <input type="file" id="fileUpload" style="display:none;" accept="image/*">
+            </div>
 
-<hr>
+            <h6 class="text-uppercase text-muted small fw-bold mb-3">Or choose an avatar emoji</h6>
+            <div class="avatar-grid">
+                <button class="avatar-btn btn" onclick="setAvatar('😀')">😀</button>
+                <button class="avatar-btn btn" onclick="setAvatar('😎')">😎</button>
+                <button class="avatar-btn btn" onclick="setAvatar('👩‍💻')">👩‍💻</button>
+                <button class="avatar-btn btn" onclick="setAvatar('👨‍💻')">👨‍💻</button>
+                <button class="avatar-btn btn" onclick="setAvatar('🦁')">🦁</button>
+                <button class="avatar-btn btn" onclick="setAvatar('🚀')">🚀</button>
+                <button class="avatar-btn btn" onclick="setAvatar('⚡')">⚡</button>
+                <button class="avatar-btn btn" onclick="setAvatar('🎯')">🎯</button>
+            </div>
 
-<!-- FORM -->
-<form onsubmit="return false;">
-<input class="form-control mb-2" placeholder="First Name">
-<input class="form-control mb-2" placeholder="Last Name">
-<input class="form-control mb-2" value="<%= email %>">
+            <button onclick="removeAvatar()" class="btn btn-light text-danger w-100 mt-4 py-2" style="border-radius:12px; font-weight:600;">
+                <i class="bi bi-trash"></i> Remove Avatar
+            </button>
+        </div>
+    </div>
 
-<button type="button" class="btn btn-primary" onclick="saveProfile()">Save</button>
-</form>
-
-</div>
-
-</div>
-
-<!-- MODAL -->
-<div id="modal" class="modal-overlay">
-<div class="modal-box">
-
-<div class="d-flex justify-content-between">
-<h5>Update Profile</h5>
-<span onclick="closeModal()" style="cursor:pointer;">✖</span>
-</div>
-
-<hr>
-
-<!-- UPLOAD -->
-<label style="cursor:pointer;">
-<div class="profile-icon">📸</div>
-<input type="file" id="uploadImage" hidden>
-</label>
-
-<h6 class="mt-3">Choose Avatar</h6>
-
-<div class="avatar-grid">
-<button onclick="setAvatar('😀')">😀</button>
-<button onclick="setAvatar('😎')">😎</button>
-<button onclick="setAvatar('👩')">👩</button>
-<button onclick="setAvatar('👨')">👨</button>
-<button onclick="setAvatar('🧑')">🧑</button>
-<button onclick="setAvatar('👩‍💻')">👩‍💻</button>
-<button onclick="setAvatar('👨‍💻')">👨‍💻</button>
-<button onclick="setAvatar('🤓')">🤓</button>
-</div>
-
-<!-- REMOVE BUTTON -->
-<button onclick="removeAvatar()" class="btn btn-danger w-100 mt-3">
-    Remove Avatar
-</button>
-
-</div>
-</div>
-
-<script>
-function openModal(){
-    document.getElementById("modal").style.display="flex";
-}
-function closeModal(){
-    document.getElementById("modal").style.display="none";
-}
-
-/* LOAD SAVED PROFILE */
-window.onload = function(){
-    let saved = localStorage.getItem("profileImage");
-
-    if(saved){
-        if(saved.startsWith("data:image")){
-            document.getElementById("profilePreview").src = saved;
-            document.getElementById("profilePreview").style.display="block";
-            document.getElementById("profileIcon").style.display="none";
-        } else {
-            document.getElementById("profileIcon").innerText = saved;
-            document.getElementById("profileIcon").style.display="block";
-            document.getElementById("profilePreview").style.display="none";
+    <!-- SCRIPTS -->
+    <script>
+        function openModal() {
+            document.getElementById('avatarModal').style.display = 'flex';
         }
-    }
-};
+        function closeModal() {
+            document.getElementById('avatarModal').style.display = 'none';
+        }
 
-/* SELECT EMOJI */
-function setAvatar(emoji){
-    localStorage.setItem("profileImage", emoji);
+        // Close on overlay click
+        window.onclick = function(e) {
+            if(e.target.classList.contains('modal-overlay')) {
+                closeModal();
+            }
+        }
 
-    document.getElementById("profileIcon").innerText = emoji;
-    document.getElementById("profileIcon").style.display="block";
-    document.getElementById("profilePreview").style.display="none";
+        // Load Avatar
+        function loadAvatar() {
+            let saved = localStorage.getItem("profileImage");
+            let img = document.getElementById("pageProfilePreview");
+            let icon = document.getElementById("pageProfileIcon");
 
-    closeModal();
-}
+            if (img && icon) {
+                if (saved) {
+                    if (saved.startsWith("data:image")) {
+                        img.src = saved;
+                        img.style.display = "block";
+                        icon.style.display = "none";
+                    } else {
+                        icon.innerText = saved;
+                        icon.style.display = "block";
+                        img.style.display = "none";
+                    }
+                } else {
+                    icon.innerText = "👤";
+                    icon.style.display = "block";
+                    img.style.display = "none";
+                }
+            }
+        }
 
-/* IMAGE UPLOAD */
-document.getElementById("uploadImage").addEventListener("change", function(e){
+        // Set Emoji Avatar
+        function setAvatar(emoji) {
+            localStorage.setItem("profileImage", emoji);
+            loadAvatar();
+            // Fire storage event manually for sidebar on same page
+            window.dispatchEvent(new Event('storage'));
+            closeModal();
+        }
 
-    let file = e.target.files[0];
-    if(!file) return;
+        // Handle Image Upload
+        document.getElementById('fileUpload').addEventListener('change', function(e) {
+            let file = e.target.files[0];
+            if (!file) return;
 
-    let reader = new FileReader();
+            let reader = new FileReader();
+            reader.onload = function() {
+                let data = reader.result;
+                localStorage.setItem("profileImage", data);
+                loadAvatar();
+                window.dispatchEvent(new Event('storage'));
+                closeModal();
+            };
+            reader.readAsDataURL(file);
+        });
 
-    reader.onload = function(){
-        let data = reader.result;
+        // Remove Avatar
+        function removeAvatar() {
+            localStorage.removeItem("profileImage");
+            loadAvatar();
+            window.dispatchEvent(new Event('storage'));
+            closeModal();
+        }
 
-        localStorage.setItem("profileImage", data);
-
-        document.getElementById("profilePreview").src = data;
-        document.getElementById("profilePreview").style.display="block";
-        document.getElementById("profileIcon").style.display="none";
-    };
-
-    reader.readAsDataURL(file);
-});
-
-/* REMOVE AVATAR */
-function removeAvatar(){
-    localStorage.removeItem("profileImage");
-
-    document.getElementById("profileIcon").innerText = "👤";
-    document.getElementById("profileIcon").style.display="block";
-
-    document.getElementById("profilePreview").style.display="none";
-    document.getElementById("profilePreview").src = "";
-
-    closeModal();
-}
-
-/* SAVE BUTTON */
-function saveProfile(){
-    alert("Profile saved successfully ✅");
-}
-</script>
-
+        // Load immediately
+        loadAvatar();
+    </script>
 </body>
 </html>

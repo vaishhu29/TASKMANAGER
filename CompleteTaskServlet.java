@@ -55,6 +55,11 @@ public class CompleteTaskServlet extends HttpServlet {
             return;
         }
 
-        res.sendRedirect("dashboard.jsp?success=completed");
+        String referer = req.getHeader("Referer");
+        if (referer != null && referer.contains("mytasks.jsp")) {
+            res.sendRedirect("mytasks.jsp");
+        } else {
+            res.sendRedirect("dashboard.jsp?success=completed");
+        }
     }
 }

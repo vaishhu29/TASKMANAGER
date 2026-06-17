@@ -24,6 +24,11 @@ public class DeleteServlet extends HttpServlet {
 
         } catch (Exception e) { e.printStackTrace(); }
 
-        res.sendRedirect("dashboard.jsp");
+        String referer = req.getHeader("Referer");
+        if (referer != null && referer.contains("mytasks.jsp")) {
+            res.sendRedirect("mytasks.jsp");
+        } else {
+            res.sendRedirect("dashboard.jsp");
+        }
     }
 }

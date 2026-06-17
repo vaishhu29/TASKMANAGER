@@ -14,7 +14,7 @@ public class AddCategoryServlet extends HttpServlet {
 
         try(Connection con = DBConnection.getConnection()){
 
-            String sql = type.equals("status") ?
+            String sql = "status".equals(type) ?
                 "INSERT INTO task_status(name) VALUES(?)" :
                 "INSERT INTO task_priority(name) VALUES(?)";
 
